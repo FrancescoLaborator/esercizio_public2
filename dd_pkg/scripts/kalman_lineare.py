@@ -1,0 +1,124 @@
+#!/usr/bin/env python3
+import rospy
+import numpy as np
+import matplotlib.pyplot as plt
+import math
+from std_msgs.msg import Float64MultiArray
+
+global axr, ayr, tt_imu, tt_gps, pub, yaw, xkh, ykh, vxkh, vykh, x, y, P, tt
+tt_imu=[]
+tt_gps=[]
+tt=[]
+yaw=[]
+axr=[]
+ayr=[]
+xkh=[]
+ykh=[]
+vxkh=[]
+vykh=[]
+xkh.append(0)
+ykh.append(0)
+x=[]
+y=[]
+P=[
+[1,0,0,0],
+[0,1,0,0],
+[0,0,1,0],
+[0,0,0,1]
+]
+
+def read_callback(msg):
+	global yaw, axr, ayr, pub, xkh, ykh, vxkh, vykh, P, tt_imu, tt
+	temp=msg.data 
+	axr.append(temp[0])
+	ayr.append(temp[1])
+	tt_imu.append(temp[3])
+	tt.append(tt_imu[-1])
+	print(tt_imu[-1])
+	V1=np.array([
+	[1,0,0,0],
+	[0,1,0,0],
+	[0,0,1,0],
+	[0,0,0,1]
+	])
+	if len(tt_imu)>1:
+		Tc=tt_imu[-1]-tt_imu[-2]		
+		vxkh.append(vxkh[-1]+Tc*axr[-1])
+		vykh.append(vykh[-1]+Tc*ayr[-1])
+		xkh.append(xkh[-1]+Tc*vxkh[-1])
+		ykh.append(ykh[-1]+Tc*vykh[-1])
+		F=[
+		[1, Tc, 0, 0],
+		[0, 1, 0, 0],
+		[0, 0, 1, Tc],
+		[0, 0, 0, 1]
+		]
+		P=np.dot(np.dot(F,P),np.transpose(F))+V1
+		
+	else:
+		Tc=0
+		vxkh.append(0)
+		vykh.append(0)
+	#imu_message=Float64MultiArray()
+	#imu_message.data=[axr[-1],ayr[-1],yaw[-1]]
+	#pub.publish(imu_message)
+
+def read_callback2(msg):
+	global x,y, P, xkh, ykh, vxkh, vykh, tt_gps, tt
+	temp=msg.data 
+	x.append(temp[0])
+	y.append(temp[1])
+	tt_gps.append(temp[2])
+	tt.append(tt_gps[-1])
+	#print(tt[-1])
+	V2=[
+	[1,0],
+	[0,1]
+	]
+	H=[
+	[1, 0, 0, 0],
+	[0, 0, 1, 0]
+	]
+	cov=np.dot(np.dot(H,P),np.transpose(H))+V2
+	print("cov")
+	print(cov)
+	K=np.dot(np.dot(P,np.transpose(H)),np.linalg.inv(cov))
+	print("K")
+	print(K)
+	e=[0,0]
+	e[0]=-xkh[-1]+temp[0]
+	e[1]=-ykh[-1]+temp[1]
+	print("e")
+	print(e)
+	temp2=np.dot(K,e)
+	print("Ke")
+	print(temp2)
+	xkh.append(xkh[-1]+temp2[0])
+	vxkh.append(vxkh[-1]+temp2[1])
+	ykh.append(ykh[-1]+temp2[2])
+	vykh.append(vykh[-1]+temp2[3])
+	P=P-np.dot(np.dot(K,H),P)
+	print("P")
+	print(P)
+
+	
+rospy.init_node('kalman_lin')
+#pub = rospy.Publisher('data_lkf', Float64MultiArray)
+sub = rospy.Subscriber('data_imu', Float64MultiArray, read_callback)
+sub2= rospy.Subscriber('data_gps', Float64MultiArray, read_callback2)
+rospy.spin()
+file_uno = open("C:\\file_imu.txt", "w")
+contenuto=str(axr)+str(ayr)+str(tt_imu)
+file_uno.write(contenuto)
+file_uno.close() 
+
+file_due = open("C:\\file_gps.txt", "w")
+contenuto=str(x)+str(y)+str(tt_gps)
+file_due.write(contenuto)
+file_due.close() 
+
+plt.figure()
+plt.plot(xkh,ykh)
+plt.ylabel('Kalman')
+plt.show()
+

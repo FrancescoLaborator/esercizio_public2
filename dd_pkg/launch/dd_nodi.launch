@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+<!--
+<include file="$(find dd_pkg)/launch/dd_gazebo.launch"/>
+-->
+<node pkg="dd_pkg" type="lettura_odom.py" name="l_odom"/>
+
+<node pkg="dd_pkg" type="lettura_imu.py" name="l_imu"/>
+
+<node pkg="dd_pkg" type="lettura_gps.py" name="l_gps"/>
+
+<node pkg="dd_pkg" type="kalman_lineare.py" name="k_l"/>
+
+</launch>

@@ -1,0 +1,256 @@
+<?xml version="1.0"?>
+<robot name="dd">
+
+  <link name="base_footprint"/>
+
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size="0.3 0.2 0.03"/>
+      </geometry>
+      <material name="avana brown">
+	<color rgba="0.6314 0.4275 0.2157 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.3 0.2 0.03"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1.0"/>
+      <inertia ixx="3.408e-3"
+               ixy="0"       iyy="7.575e-3"
+               ixz="0"       iyz="0"       izz="1.083e-2"/>
+    </inertial>
+  </link>
+
+  <joint name="base_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link" />
+    <origin xyz="0 0 0.18" rpy="0 0 0"/>
+  </joint>
+
+  <link name="right_wheel">
+    <visual>
+      <geometry>
+        <cylinder length="0.02" radius="0.03"/>
+      </geometry>
+      <material name="black">
+	<color rgba="0 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.02" radius="0.03"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="2.583e-5"
+               ixy="0"       iyy="2.583e-5"
+               ixz="0"       iyz="0"       izz="7.5e-6"/>
+    </inertial>
+  </link>
+
+  <joint name="right_wheel_joint" type="continuous">
+    <axis xyz="0 0 1"/>
+    <parent link="base_link"/>
+    <child link="right_wheel"/>
+    <origin rpy="-1.5708 0 0" xyz="0.05 -0.11 0"/>
+  </joint>
+
+  <link name="left_wheel">
+    <visual>
+      <geometry>
+        <cylinder length="0.02" radius="0.03"/>
+      </geometry>
+      <material name="black">
+	<color rgba="0 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.02" radius="0.03"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="2.583e-5"
+               ixy="0"       iyy="2.583e-5"
+               ixz="0"       iyz="0"       izz="7.5e-6"/>
+    </inertial>
+  </link>
+
+  <joint name="left_wheel_joint" type="continuous">
+    <axis xyz="0 0 1"/>
+    <parent link="base_link"/>
+    <child link="left_wheel"/>
+    <origin rpy="-1.5708 0 0" xyz="0.05 0.11 0"/>
+  </joint>
+  
+  <link name="caster_wheel">
+    <visual>
+      <geometry>
+        <sphere radius="0.015"/>
+      </geometry>
+      <material name="black">
+	<color rgba="0 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <sphere radius="0.015"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="9e-6"
+               ixy="0"   iyy="9e-6"
+               ixz="0"   iyz="0"   izz="9e-6"/>
+    </inertial>
+  </link>
+
+  <joint name="caster_wheel_joint" type="fixed">
+    <axis xyz="0 1 0"/>
+    <parent link="base_link"/>
+    <child link="caster_wheel"/>
+    <origin rpy="0 0 0" xyz="-0.1 0 -0.015"/>
+  </joint>
+
+<gazebo>
+  <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+    <commandTopic>cmd_vel</commandTopic>
+    <odometryTopic>odom</odometryTopic>
+    <odometrySource>1</odometrySource>
+    <leftJoint>left_wheel_joint</leftJoint>
+    <rightJoint>right_wheel_joint</rightJoint>
+    <robotBaseFrame>base_link</robotBaseFrame>
+    <wheelSeparation>0.2</wheelSeparation>
+    <wheelDiameter>0.06</wheelDiameter>
+    <wheelTorque>10</wheelTorque>
+    <publishWheelTF>true</publishWheelTF>
+    <publishWheelJointState>true</publishWheelJointState>
+  </plugin>
+</gazebo>
+  
+
+<link name="imu_link">
+  <visual>
+    <geometry>
+      <cylinder length="0.04" radius="0.05"/>
+    </geometry>
+    <material name="gray">
+      <color rgba="0.1 0.1 0.2 1"/>
+    </material>
+  </visual>
+  <collision>
+    <geometry>
+      <cylinder length="0.04" radius="0.05"/>
+    </geometry>
+  </collision>
+  <inertial>
+    <mass value="0.09"/>
+    <inertia ixx="3.03e-4"
+             ixy="0"       iyy="3.03e-4"
+             ixz="0"       iyz="0"       izz="8.3e-5"/>
+  </inertial>
+</link>
+
+<joint name="imu_joint" type="fixed">
+  <axis xyz="0 0 0"/>
+  <parent link="base_link"/>
+  <child link="imu_link"/>
+  <origin rpy="0 0 0" xyz="0 0 0.032"/>
+</joint>
+
+
+<gazebo reference="imu_link">
+    <gravity>true</gravity>
+    <sensor name="imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <visualize>true</visualize>
+      <topic>__default_topic__</topic>
+      <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+        <topicName>imu</topicName>
+        <bodyName>imu_link</bodyName>
+        <updateRateHZ>100.0</updateRateHZ>
+        <gaussianNoise>0</gaussianNoise>
+        <xyzOffset>0 0 0</xyzOffset>
+        <rpyOffset>0 0 0</rpyOffset>
+        <frameName>imu_link</frameName>
+        <initialOrientationAsReference>false</initialOrientationAsReference>
+      </plugin>
+      <pose>0 0 0 0 0 0</pose>
+    </sensor>
+  </gazebo>
+
+<link name="gps_link">
+  <visual>
+    <geometry>
+      <cylinder length="0.04" radius="0.05"/>
+    </geometry>
+    <material name="gray">
+      <color rgba="0.1 0.1 0.2 1"/>
+    </material>
+  </visual>
+  <collision>
+    <geometry>
+      <cylinder length="0.04" radius="0.05"/>
+    </geometry>
+  </collision>
+  <inertial>
+    <mass value="0.09"/>
+    <inertia ixx="3.03e-4"
+             ixy="0"       iyy="3.03e-4"
+             ixz="0"       iyz="0"       izz="8.3e-5"/>
+  </inertial>
+</link>
+
+<joint name="gps_joint" type="fixed">
+  <axis xyz="0 0 0"/>
+  <parent link="base_link"/>
+  <child link="gps_link"/>
+  <origin rpy="0 0 0" xyz="0 0 0.063"/>
+</joint>
+
+<gazebo>
+<plugin name="novatel_gps_sim" filename="libhector_gazebo_ros_gps.so">
+<alwaysOn>1</alwaysOn>
+<updateRate>10.0</updateRate>
+<bodyName>base_footprint</bodyName>
+<topicName>gps</topicName>
+<!--velocityTopicName>
+fix_velocity</velocityTopicName>
+<drift>5.0 5.0 5.0</drift>-->
+<gaussianNoise>0.001 0.001 0.001</gaussianNoise>
+<velocityDrift>0 0 0</velocityDrift>
+<velocityGaussianNoise>0.1 0.1 0.1</velocityGaussianNoise>
+</plugin>
+</gazebo>
+
+<!--
+<gazebo reference="gps_link">
+    <gravity>true</gravity>
+    <sensor name="gps_sensor" type="gps">
+      <always_on>true</always_on>
+      <update_rate>10</update_rate>
+      <visualize>true</visualize>
+      <topic>__default_topic__</topic>
+      <plugin filename="libhector_gazebo_ros_gps.so" name="gps_plugin">
+        <topicName>gps</topicName>
+        <bodyName>gps_link</bodyName>
+        <updateRateHZ>10.0</updateRateHZ>
+        <xyzOffset>0 0 0</xyzOffset>
+        <frameName>gps_link</frameName>
+        <initialOrientationAsReference>false</initialOrientationAsReference>
+      </plugin>
+      <pose>0 0 0 0 0 0</pose>
+    </sensor>
+  </gazebo>
+\-->
+
+
+</robot>
+
